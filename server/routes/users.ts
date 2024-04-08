@@ -6,6 +6,8 @@ const streamClient = StreamChat.getInstance(
   process.env.STREAM_API_SECRET!
 );
 
+const TOKEN_USER_ID_MAP = new Map<string, string>();
+
 export const userRoutes = async (app: FastifyInstance) => {
   app.post<{ Body: { id: string; name: string; image?: string } }>(
     "/signup",
@@ -43,9 +45,28 @@ export const userRoutes = async (app: FastifyInstance) => {
     }
 
     const token = streamClient.createToken(id);
+    TOKEN_USER_ID_MAP.set(token, user.id);
+
     return {
       token,
       user: { id: user.id, name: user.name, image: user.image },
     };
+  });
+
+  app.post<{ Body: { token: string } }>("/logout", async (req, res) => {
+    const { token } = req.body;
+
+    if (!token) {
+      return res.status(400).send();
+    }
+
+    const id = TOKEN_USER_ID_MAP.get(token);
+
+    if (!id) {
+      return res.status(400).send();
+    }
+
+    await streamClient.revokeUserToken(id, new Date());
+    TOKEN_USER_ID_MAP.delete(token);
   });
 };

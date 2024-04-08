@@ -9,11 +9,13 @@ import {
 } from "react";
 import { useNavigate } from "react-router-dom";
 import { StreamChat } from "stream-chat";
+import { useLocalStorage } from "../hooks/useLocalStorage";
 
 type AuthContext = {
   user?: User;
   streamChat?: StreamChat;
   signup: UseMutationResult<AxiosResponse, unknown, User>;
+  logout: UseMutationResult<AxiosResponse, unknown, void>;
   login: UseMutationResult<{ token: string; user: User }, unknown, string>;
 };
 
@@ -44,8 +46,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const serverUrl = import.meta.env.VITE_SERVER_URL;
   const navigate = useNavigate();
 
-  const [user, setUser] = useState<User>();
-  const [token, setToken] = useState<string>("");
+  const [user, setUser] = useLocalStorage<User>("user");
+  const [token, setToken] = useLocalStorage<string>("token");
   const [streamChat, setstreamChat] = useState<StreamChat>();
 
   const signup = useMutation({
@@ -66,6 +68,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     onSuccess(data) {
       setUser(data.user);
       setToken(data.token);
+    },
+  });
+
+  const logout = useMutation({
+    mutationFn: () => {
+      return axios.post(`${serverUrl}/logout`, { token });
+    },
+    onSuccess() {
+      setUser(undefined);
+      setToken(undefined);
+      setstreamChat(undefined);
     },
   });
 
@@ -108,7 +121,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   }, [user, token]);
 
   return (
-    <Context.Provider value={{ signup, login, user, streamChat }}>
+    <Context.Provider value={{ signup, login, user, streamChat, logout }}>
       {children}
     </Context.Provider>
   );
