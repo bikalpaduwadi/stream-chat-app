@@ -1,5 +1,6 @@
 import {
   Chat,
+  Thread,
   Window,
   Channel,
   MessageList,
@@ -11,7 +12,7 @@ import {
 
 import { useLoggedInAuth } from "../context/AuthContext";
 
-import "stream-chat-react/dist/css/index.css";
+import 'stream-chat-react/dist/css/v2/index.css';
 import StreamChannelList from "../component/StreamChannelList";
 
 const Home = () => {
@@ -20,6 +21,13 @@ const Home = () => {
   if (!streamChat) {
     return <LoadingIndicator />;
   }
+
+  const customActions = {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    'Custom: Copy text': (message: any) => {
+      navigator.clipboard.writeText(message.text || '');
+    },
+  };
 
   return (
     <Chat client={streamChat}>
@@ -31,9 +39,10 @@ const Home = () => {
       <Channel>
         <Window>
           <ChannelHeader />
-          <MessageList />
+          <MessageList customMessageActions={customActions} />
           <MessageInput />
         </Window>
+        <Thread />
       </Channel>
     </Chat>
   );

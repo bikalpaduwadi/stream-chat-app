@@ -18,7 +18,7 @@ export function useLocalStorage<T>(
   });
 
   useEffect(() => {
-    if (value === undefined) {
+    if (!value) {
       localStorage.removeItem(key);
       return;
     }
